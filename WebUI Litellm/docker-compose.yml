@@ -1,5 +1,5 @@
-version: "3.11"
- 
+version: "3.9"
+
 services:
   # LiteLLM Proxy with Admin UI
   litellm:
@@ -42,7 +42,31 @@ services:
       timeout: 5s
       retries: 10
 
+  # Open WebUI connected to LiteLLM Proxy
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    depends_on:
+      - litellm
+    environment:
+      # Point Open WebUI to LiteLLM proxy
+      LITELLM_API_BASE: http://litellm:4000
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-supersecret}
+      ENABLE_AUTH: "true"
+      DEFAULT_USERNAME: admin
+      DEFAULT_PASSWORD: admin123
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    restart: unless-stopped
+
 volumes:
+  open-webui:
+    name: open-webui-data
   postgres_data:
     name: litellm_postgres_data
 
+networks:
+  default:
+    name: litellm-net
